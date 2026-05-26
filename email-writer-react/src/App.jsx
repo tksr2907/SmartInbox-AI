@@ -1,122 +1,140 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import {
+  Typography,
+  Container,
+  TextField,
+  Box,
+  FormControl,
+  MenuItem,
+  InputLabel,
+  Select,
+  CircularProgress,
+  Button
+} from '@mui/material';
+
+import { useState } from 'react';
+import axios from 'axios';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [emailContent, setEmailContent] = useState('');
+  const [tone, setTone] = useState('');
+  const [generatedReply, setGeneratedReply] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await axios.post(
+        'http://localhost:6060/api/email/generate',
+        { emailContent, tone }
+      );
+
+      setGeneratedReply(
+        typeof response.data === 'string'
+          ? response.data
+          : JSON.stringify(response.data)
+      );
+    } catch (error) {
+      setError('Failed to generate email reply. Please try again');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedReply);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography
+        variant="h3"
+        component="h1"
+        gutterBottom
+        align="center"
+      >
+        Email Reply Generator
+      </Typography>
+
+      <Box sx={{ mx: 3 }}>
+        <TextField
+          fullWidth
+          multiline
+          rows={6}
+          variant="outlined"
+          label="Original Email Content"
+          value={emailContent}
+          onChange={(e) => setEmailContent(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel>Tone (Optional)</InputLabel>
+
+          <Select
+            value={tone}
+            label="Tone (Optional)"
+            onChange={(e) => setTone(e.target.value)}
+          >
+            <MenuItem value="">None</MenuItem>
+            <MenuItem value="professional">Professional</MenuItem>
+            <MenuItem value="casual">Casual</MenuItem>
+            <MenuItem value="friendly">Friendly</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!emailContent || loading}
+          fullWidth
         >
-          Count is {count}
-        </button>
-      </section>
+          {loading ? (
+            <CircularProgress size={24} />
+          ) : (
+            'Generate Reply'
+          )}
+        </Button>
 
-      <div className="ticks"></div>
+        {error && (
+          <Typography color="error" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {generatedReply && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Generated Reply:
+            </Typography>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            <TextField
+              fullWidth
+              multiline
+              rows={6}
+              variant="outlined"
+              value={generatedReply}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+
+            <Button
+              variant="outlined"
+              sx={{ mt: 2 }}
+              onClick={handleCopy}
+            >
+              Copy to Clipboard
+            </Button>
+          </Box>
+        )}
+      </Box>
+    </Container>
+  );
 }
 
-export default App
+export default App;
